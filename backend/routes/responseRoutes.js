@@ -63,22 +63,24 @@ const mongoose = require("mongoose");
 router.get("/summary/:id", auth, async (req, res) => {
   try {
     const responses = await Response.find({
-      patientId: new mongoose.Types.ObjectId(req.params.id),
-    }).sort({ createdAt: -1 });
+      patientId: req.params.id,
+    });
 
     if (responses.length === 0) {
       return res.json({ message: "No data" });
     }
 
-    const latest = responses[0];
+    const latestResponse = responses[responses.length - 1];
 
     res.json({
-      latestRisk: latest.riskLevel,
-      feeling: latest.feeling,
-      symptoms: latest.symptoms,
-      medicationTaken: latest.medicationTaken,
+      latestRisk: latestResponse.riskLevel,
+      feeling: latestResponse.feeling,
+      symptoms: latestResponse.symptoms,
+      medicationTaken: latestResponse.medicationTaken,
+      createdAt: latestResponse.createdAt, // ✅ safe now
     });
   } catch (err) {
+    console.log("SUMMARY ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
