@@ -5,10 +5,11 @@ const responseSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Patient",
   },
-  feeling: String, // Good / Okay / Bad
-  medicationTaken: String, // Yes / No
-  symptoms: String, // None / Mild / Severe
+  feeling: String,
+  medicationTaken: String,
+  symptoms: String,
   riskLevel: String,
+  reasons: [String],
   createdAt: {
     type: Date,
     default: Date.now,

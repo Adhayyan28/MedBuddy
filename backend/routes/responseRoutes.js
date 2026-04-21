@@ -11,19 +11,36 @@ router.post("/add", auth, async (req, res) => {
     const f = feeling.toLowerCase();
     const m = medicationTaken.toLowerCase();
     const s = symptoms.toLowerCase();
+    let reasons = [];
 
     let score = 0;
 
     // feeling
-    if (f === "okay") score += 1;
-    if (f === "bad") score += 2;
+    // feeling
+    if (f === "okay") {
+      score += 1;
+      reasons.push("Patient feeling is not fully normal");
+    }
+    if (f === "bad") {
+      score += 2;
+      reasons.push("Patient feeling is bad");
+    }
 
     // medication
-    if (m === "no") score += 2;
+    if (m === "no") {
+      score += 2;
+      reasons.push("Medication not taken");
+    }
 
     // symptoms
-    if (s === "mild") score += 1;
-    if (s === "severe") score += 3;
+    if (s === "mild") {
+      score += 1;
+      reasons.push("Mild symptoms present");
+    }
+    if (s === "severe") {
+      score += 3;
+      reasons.push("Severe symptoms observed");
+    }
 
     let riskLevel = "Low";
 
@@ -33,24 +50,31 @@ router.post("/add", auth, async (req, res) => {
     const response = new Response({
       ...req.body,
       riskLevel,
+      reasons,
     });
 
     await response.save();
-    const Waitlist = require("../models/waitlist"); // make sure at top
+    const Waitlist = require("../models/waitlist");
 
-    // AUTO WAITLIST
+    // AUTO WAITLIST MANAGEMENT
+    const existing = await Waitlist.findOne({
+      patientId: req.body.patientId,
+      status: "Pending",
+    });
+
     if (riskLevel === "High") {
-      const existing = await Waitlist.findOne({
-        patientId: req.body.patientId,
-        status: "Pending", // optional but better
-      });
-
+      // ADD if not already present
       if (!existing) {
         await Waitlist.create({
           patientId: req.body.patientId,
           reason: "Auto - High Risk",
           status: "Pending",
         });
+      }
+    } else {
+      // REMOVE if risk reduced
+      if (existing) {
+        await Waitlist.deleteOne({ _id: existing._id });
       }
     }
     res.json(response);
@@ -95,6 +119,7 @@ router.get("/summary/:id", auth, async (req, res) => {
       symptoms: latestResponse.symptoms,
       medicationTaken: latestResponse.medicationTaken,
       createdAt: latestResponse.createdAt,
+      reasons: latestResponse.reasons,
     });
   } catch (err) {
     console.log("SUMMARY ERROR:", err);

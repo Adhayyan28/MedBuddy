@@ -351,6 +351,13 @@ function App() {
                           <span className={`badge ${summary.latestRisk.toLowerCase()}`}>
                             {summary.latestRisk}
                           </span>
+                          <p>
+                            <b>Why this risk?</b>
+                          </p>
+
+                          <ul>
+                            {summary.reasons && summary.reasons.map((r, i) => <li key={i}>{r}</li>)}
+                          </ul>
                         </div>
                         <div className="summary-field">
                           <label>Feeling</label>
