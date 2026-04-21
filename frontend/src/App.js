@@ -15,6 +15,7 @@ function App() {
     symptoms: "",
     medicationTaken: "",
   });
+  const [search, setSearch] = useState("");
 
   // 👉 NEW FORM STATE
   const [form, setForm] = useState({
@@ -217,120 +218,146 @@ function App() {
         <Route
           path="/doctor"
           element={
-            <div className="main-layout">
-              {/* LEFT PANEL */}
-              <div className="left-panel">
-                <button
-                  className="btn"
-                  onClick={() => {
-                    localStorage.removeItem("token");
-                    setIsLoggedIn(false);
-                  }}
-                  style={{ marginBottom: 10 }}
-                >
-                  Logout
-                </button>
+            <>
+              {/* ✅ METRICS HERE */}
+              <div style={{ display: "flex", gap: 20, marginBottom: 20 }}>
+                <div className="card" style={{ flex: 1 }}>
+                  <h3>Total Patients</h3>
+                  <p>{patients.length}</p>
+                </div>
 
-                <h2>Add Patient</h2>
-
-                <input name="name" placeholder="Name" value={form.name} onChange={handleChange} />
-                <input
-                  name="phone"
-                  placeholder="Phone"
-                  value={form.phone}
-                  onChange={handleChange}
-                />
-                <input
-                  name="condition"
-                  placeholder="Condition"
-                  value={form.condition}
-                  onChange={handleChange}
-                />
-                <input
-                  name="medications"
-                  placeholder="Medications"
-                  value={form.medications}
-                  onChange={handleChange}
-                />
-
-                <br />
-                <br />
-                <button className="btn" onClick={addPatient}>
-                  Add Patient
-                </button>
-
-                <h2>Patients</h2>
-
-                {patients.map((p) => (
-                  <div key={p._id} className="card patient-card" onClick={() => getSummary(p._id)}>
-                    <h3>{p.name}</h3>
-                    <p>{p.condition}</p>
-
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deletePatient(p._id);
-                      }}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                ))}
+                <div className="card" style={{ flex: 1 }}>
+                  <h3>Waitlist</h3>
+                  <p>{waitlist.length}</p>
+                </div>
               </div>
 
-              {/* RIGHT PANEL */}
-              <div className="right-panel">
-                {selectedPatient && <p>Viewing patient ID: {selectedPatient}</p>}
+              <div className="main-layout">
+                {/* LEFT PANEL */}
+                <div className="left-panel">
+                  <button
+                    className="btn"
+                    onClick={() => {
+                      localStorage.removeItem("token");
+                      setIsLoggedIn(false);
+                    }}
+                    style={{ marginBottom: 10 }}
+                  >
+                    Logout
+                  </button>
 
-                {summary && summary.latestRisk && (
-                  <div className="card">
-                    <h2>Patient Summary</h2>
+                  <h2>Add Patient</h2>
 
-                    <p>
-                      Risk:{" "}
-                      <span className={`badge ${summary.latestRisk.toLowerCase()}`}>
-                        {summary.latestRisk}
-                      </span>
-                    </p>
+                  <input name="name" placeholder="Name" value={form.name} onChange={handleChange} />
+                  <input
+                    name="phone"
+                    placeholder="Phone"
+                    value={form.phone}
+                    onChange={handleChange}
+                  />
+                  <input
+                    name="condition"
+                    placeholder="Condition"
+                    value={form.condition}
+                    onChange={handleChange}
+                  />
+                  <input
+                    name="medications"
+                    placeholder="Medications"
+                    value={form.medications}
+                    onChange={handleChange}
+                  />
 
-                    <p>Feeling: {summary.feeling}</p>
-                    <p>Symptoms: {summary.symptoms}</p>
-                    <p>Medication: {summary.medicationTaken}</p>
-                    <p>
-                      Last Updated:{" "}
-                      {new Date(summary.createdAt).toLocaleString("en-IN", {
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                      })}
-                    </p>
+                  <br />
+                  <br />
+                  <button className="btn" onClick={addPatient}>
+                    Add Patient
+                  </button>
+                  <input
+                    placeholder="Search patient..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
 
-                    <button className="btn" onClick={() => addToWaitlist(selectedPatient)}>
-                      Add to Waitlist
-                    </button>
-                  </div>
-                )}
+                  <h2>Patients</h2>
 
-                <h2>Waitlist</h2>
+                  {patients
+                    .filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
+                    .map((p) => (
+                      <div
+                        key={p._id}
+                        className="card patient-card"
+                        onClick={() => getSummary(p._id)}
+                      >
+                        <h3>{p.name}</h3>
+                        <p>{p.condition}</p>
 
-                {waitlist.length === 0 ? (
-                  <p>No patients in waitlist</p>
-                ) : (
-                  waitlist.map((w) => (
-                    <div key={w._id} className="card waitlist-card">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deletePatient(p._id);
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    ))}
+                </div>
+
+                {/* RIGHT PANEL */}
+                <div className="right-panel">
+                  {selectedPatient && <p>Viewing patient ID: {selectedPatient}</p>}
+
+                  {summary && summary.latestRisk && (
+                    <div className="card">
+                      <h2>Patient Summary</h2>
+
                       <p>
-                        <b>{w.patientId?.name}</b>
+                        Risk:{" "}
+                        <span className={`badge ${summary.latestRisk.toLowerCase()}`}>
+                          {summary.latestRisk}
+                        </span>
                       </p>
-                      <p>Reason: {w.reason}</p>
-                      <p>Status: {w.status}</p>
 
-                      <button className="btn" onClick={() => deleteWaitlist(w._id)}>
-                        Remove
+                      <p>Feeling: {summary.feeling}</p>
+                      <p>Symptoms: {summary.symptoms}</p>
+                      <p>Medication: {summary.medicationTaken}</p>
+                      <p>
+                        Last Updated:{" "}
+                        {new Date(summary.createdAt).toLocaleString("en-IN", {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        })}
+                      </p>
+
+                      <button className="btn" onClick={() => addToWaitlist(selectedPatient)}>
+                        Add to Waitlist
                       </button>
                     </div>
-                  ))
-                )}
+                  )}
+
+                  <h2>Waitlist</h2>
+
+                  {waitlist.length === 0 ? (
+                    <p>No patients in waitlist</p>
+                  ) : (
+                    waitlist.map((w) => (
+                      <div key={w._id} className="card waitlist-card">
+                        <p>
+                          <b>{w.patientId?.name}</b>
+                        </p>
+                        <p>Reason: {w.reason}</p>
+                        <p>Status: {w.status}</p>
+
+                        <button className="btn" onClick={() => deleteWaitlist(w._id)}>
+                          Remove
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
-            </div>
+            </>
           }
         />
 

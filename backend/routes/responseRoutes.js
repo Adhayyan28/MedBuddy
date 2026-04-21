@@ -22,13 +22,13 @@ router.post("/add", auth, async (req, res) => {
     if (m === "no") score += 2;
 
     // symptoms
-    if (s === "mild") score += 2;
-    if (s === "severe") score += 4;
+    if (s === "mild") score += 1;
+    if (s === "severe") score += 3;
 
     let riskLevel = "Low";
 
-    if (score >= 6) riskLevel = "High";
-    else if (score >= 3) riskLevel = "Medium";
+    if (score >= 5) riskLevel = "High";
+    else if (score >= 2) riskLevel = "Medium";
 
     const response = new Response({
       ...req.body,
@@ -36,6 +36,23 @@ router.post("/add", auth, async (req, res) => {
     });
 
     await response.save();
+    const Waitlist = require("../models/waitlist"); // make sure at top
+
+    // AUTO WAITLIST
+    if (riskLevel === "High") {
+      const existing = await Waitlist.findOne({
+        patientId: req.body.patientId,
+        status: "Pending", // optional but better
+      });
+
+      if (!existing) {
+        await Waitlist.create({
+          patientId: req.body.patientId,
+          reason: "Auto - High Risk",
+          status: "Pending",
+        });
+      }
+    }
     res.json(response);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -77,7 +94,7 @@ router.get("/summary/:id", auth, async (req, res) => {
       feeling: latestResponse.feeling,
       symptoms: latestResponse.symptoms,
       medicationTaken: latestResponse.medicationTaken,
-      createdAt: latestResponse.createdAt, // ✅ safe now
+      createdAt: latestResponse.createdAt,
     });
   } catch (err) {
     console.log("SUMMARY ERROR:", err);
